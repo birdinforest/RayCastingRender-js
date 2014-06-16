@@ -9,25 +9,15 @@
 // Material
 //*********************************
 
-// Checker Material
-// scale = 0.1 means there are 0.1 grid in 1 * 1 area
-// so that grid size is 10 * 10
-//var CheckerMaterial = function (scale, reflectiveness) {
-//    this.scale = scale;
-//    this.reflectiveness = reflectiveness;
-//};
-//CheckerMaterial.prototype = {
-//    sample : function (ray, position, normal) {
-//        return Math.abs( (Math.floor(position.x * 0.1) +
-//                          Math.floor(position.z * this.scale)) % 2
-//                       ) < 1 ? Colour.black : Color.white;
-//    }
-//};
-CheckerMaterial = function(scale, reflectiveness) { this.scale = scale; this.reflectiveness = reflectiveness; };
+CheckerMaterial = function(scale, reflectiveness) {
+    this.scale = scale;
+    this.reflectiveness = reflectiveness;
+};
 
 CheckerMaterial.prototype = {
     sample : function(ray, position, normal) {
-        return Math.abs((Math.floor(position.x * 0.1) + Math.floor(position.z * this.scale)) % 2) < 1 ? Colour.black : Colour.white;
+        return Math.abs( (Math.floor(position.x * 0.1) + Math.floor(position.z * this.scale)) % 2 ) < 1 ?
+               Colour.black : Colour.white;
     }
 };
 
