@@ -209,6 +209,41 @@ function materialRender(canvas, scene, camera)
     // render
     ctx.putImageData(imgdata, 0, 0);
 }
+
+//*********************************
+// Material and reflection render function
+//*********************************
+function rayTraceRecursive(scene, ray, maxReflect) {
+    var result = scene.intersect(ray);
+
+    if(result.geometry) {
+        var reflectiveness = result.geometry.material.reflectiveness;
+        var colour = result.geometry.material.sample(ray, result.position, result.normal);
+        colour = colour.multiply(1 - reflectiveness);
+
+        // r = d - 2(d.n)n
+        // d: enter ray direction, n: surface normal, r: out ray direction
+        // while maxReflect > 0, do calculate reflected colour recursively
+        if(reflectiveness > 0 && maxReflect > 0) {
+            var d = ray.direction;
+            var n = result.normal;
+            var r = n.multiply(-2 * (n.dot(d))).add(d);
+
+            // renew reflected ray
+            ray = new Ray3(result.position, r);
+
+            // do reflection recursively, maxReflect--
+            var reflectedColour = rayTraceRecursive(scene, ray, maxReflect - 1);
+
+            // add reflected colour to sampled colour
+            colour = colour.add(reflectedColour.multiply(reflectiveness));
+        }
+        return colour;
+    }
+    else
+        return Colour.black;    // no shape is detected, render black colour as background colour
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //*********************************
@@ -277,7 +312,7 @@ var plane = new Plane(new Vector3(0, 1, 0), 0);
 var sphereRed = new Sphere(new Vector3(-10, 10, -10), 10);
 var sphereBlue = new Sphere(new Vector3(10, 10, -10), 10);
 plane.material = new CheckerMaterial(0.1);
-sphereRed.material = new PhongMaterial(Colour.red, Colour.white, 16);
+sphereRed.material = new PhongMaterial(Colour.red, Colour.white, 32);
 sphereBlue.material = new PhongMaterial(Colour.blue, Colour.white, 16);
 materialRender(
     document.getElementById('materialCanvas'),

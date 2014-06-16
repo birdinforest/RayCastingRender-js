@@ -10,7 +10,7 @@ Plane = function(vNormal, fDist) {
 
 Plane.prototype = {
     copy : function() {
-        return new Plane(this.normal, this.distance);
+        return new Plane(this.normal.copy(), this.distance);
     },
 
     initialise : function () {

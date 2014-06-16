@@ -15,6 +15,7 @@ CheckerMaterial = function(scale, reflectiveness) {
 };
 
 CheckerMaterial.prototype = {
+    // calculate light colour based on material
     sample : function(ray, position, normal) {
         return Math.abs( (Math.floor(position.x * 0.1) + Math.floor(position.z * this.scale)) % 2 ) < 1 ?
                Colour.black : Colour.white;
@@ -34,6 +35,7 @@ var lightDir = new Vector3(1, 1, 1).normalise();
 var lightColour = Colour.white;
 
 PhongMaterial.prototype = {
+    // calculate light colour based on material
     sample : function (ray, position, normal) {
         var NdotL = normal.dot(lightDir);
         var H = (lightDir.subtract(ray.direction)).normalise();
