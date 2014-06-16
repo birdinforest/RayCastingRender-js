@@ -1,7 +1,7 @@
 "use strict";
 
 //*********************************
-// intersection class, stores intersection data
+// intersection result class, stores intersection data
 //*********************************
 var IntersectResult = function () {
     this.geometry = null;
@@ -25,34 +25,16 @@ Ray3.prototype = {
         return this.origin.add(this.direction.multiply(t));
     }
 };
+
 //*********************************
-// camera, perspective projection
+// Initialise function
+// Init canvas context, image data, scene, and camera
 //*********************************
-var PerspectiveCamera = function (eye, front, up, fov, distToScreen) {
-    this.eye = eye;
-    this.front = front;
-    this.refUp = up;
-    this.fov = fov;
-    this.distToScreen = distToScreen;
-};
-PerspectiveCamera.prototype = {
-    initialise : function() {
-        this.right = this.front.cross(this.refUp);
-        this.up = this.right.cross(this.front);
-        this.fovScale = Math.tan(this.fov * 0.5 * Math.PI / 180) * 2;
-    },
-    generateRay : function (x, y) {
-        var r = this.right.multiply((x - 0.5) * this.fovScale * this.distToScreen);
-        var u = this.up.multiply((y - 0.5) * this.fovScale * this.distToScreen);
-        return new Ray3(this.eye, this.front.add(r).add(u).normalise());
-    }
-};
 
 //*********************************
 // depth render function
 //*********************************
-function renderDepth(canvas, scene, camera, maxDepth)
-{
+function renderDepth(canvas, scene, camera, maxDepth) {
     // initialise the rendering shape
     scene.initialise();
     // initialise the camera
@@ -70,27 +52,20 @@ function renderDepth(canvas, scene, camera, maxDepth)
 
     // calculate depth render data
     var i = 0;
-    for(var y = 0; y < h; y++)
-    {
+    for(var y = 0; y < h; y++) {
         // y starts from left top
         // sy starts from left bottom
         var sy = 1 - y / h;
-        for(var x = 0; x < w; x++)
-        {
+        for(var x = 0; x < w; x++) {
             var sx = x / w;
-
             // generate a ray
             var ray = camera.generateRay(sx, sy);
             var result = scene.intersect(ray);
-
             // if intersection detected
-            if(result.geometry)
-            {
+            if(result.geometry) {
                 // depth = maxDepth, color = 0 (black)
                 // depth = 0, color = 255 (white)
-                var depth = 255 -
-                    Math.min( (result.distance / maxDepth) * 255, 255 );
-
+                var depth = 255 - Math.min( (result.distance / maxDepth) * 255, 255 );
                 pixels[i    ] = depth;
                 pixels[i + 1] = depth;
                 pixels[i + 2] = depth;
@@ -99,15 +74,13 @@ function renderDepth(canvas, scene, camera, maxDepth)
             i += 4;     // step is 4
         }
     }
-
     // render
     ctx.putImageData(imgdata, 0, 0);
 }
 //*********************************
 // normal render function
 //*********************************
-function renderNormal(canvas, scene, camera)
-{
+function renderNormal(canvas, scene, camera) {
     // initialise the rendering shape
     scene.initialise();
     // initialise the camera
@@ -125,8 +98,7 @@ function renderNormal(canvas, scene, camera)
 
     // calculate depth render data
     var i = 0;
-    for(var y = 0; y < h; y++)
-    {
+    for(var y = 0; y < h; y++) {
         // y starts from left top
         // sy starts from left bottom
         var sy = 1 - y / h;
@@ -161,8 +133,7 @@ function renderNormal(canvas, scene, camera)
 //*********************************
 // Material render function
 //*********************************
-function materialRender(canvas, scene, camera)
-{
+function materialRender(canvas, scene, camera) {
     // initialise the rendering shape
     scene.initialise();
     // initialise the camera
@@ -180,13 +151,11 @@ function materialRender(canvas, scene, camera)
 
     // calculate depth render data
     var i = 0;
-    for(var y = 0; y < h; y++)
-    {
+    for(var y = 0; y < h; y++) {
         // y starts from left top
         // sy starts from left bottom
         var sy = 1 - y / h;
-        for(var x = 0; x < w; x++)
-        {
+        for(var x = 0; x < w; x++) {
             var sx = x / w;
 
             // generate a ray
@@ -194,8 +163,7 @@ function materialRender(canvas, scene, camera)
             var result = scene.intersect(ray);
 
             // if intersection detected
-            if(result.geometry)
-            {
+            if(result.geometry) {
                 var colour = result.geometry.material.sample( ray, result.position, result.normal );
                 pixels[i    ] = colour.r * 255;
                 pixels[i + 1] = colour.g * 255;
@@ -218,6 +186,9 @@ function rayTraceRecursive(scene, ray, maxReflect) {
 
     if(result.geometry) {
         var reflectiveness = result.geometry.material.reflectiveness;
+        if(reflectiveness == null)
+            reflectiveness = 0;
+
         var colour = result.geometry.material.sample(ray, result.position, result.normal);
         colour = colour.multiply(1 - reflectiveness);
 
@@ -356,7 +327,7 @@ var sphereRed = new Sphere(new Vector3(-10, 10, -10), 10);
 var sphereBlue = new Sphere(new Vector3(10, 10, -10), 10);
 plane.material = new CheckerMaterial(0.1, 0.3);
 sphereRed.material = new PhongMaterial(Colour.red, Colour.white, 32, 0.3);
-sphereBlue.material = new PhongMaterial(Colour.blue, Colour.white, 16, 0.3);
+sphereBlue.material = new PhongMaterial(Colour.blue, Colour.white, 32, 0.3);
 materialRender(
     document.getElementById('materialCanvas'),
     new Union([plane, sphereRed, sphereBlue]),
