@@ -244,6 +244,49 @@ function rayTraceRecursive(scene, ray, maxReflect) {
         return Colour.black;    // no shape is detected, render black colour as background colour
 }
 
+function reflectRender(canvas, scene, camera, maxReflect) {
+    if(!canvas || !canvas.getContext)
+        alert("Can't get canvas.")
+    // get imagedata pixels from canvas
+    var ctx = canvas.getContext("2d");
+    if(!ctx.getImageData)
+        alert("Can't get context image date.");
+
+    var w = canvas.attributes.width.value;
+    var h = canvas.attributes.height.value;
+    ctx.fillStyle = "rgb(0,0,0)";
+    ctx.fillRect(0, 0, w, h);
+    var imgdata = ctx.getImageData(0, 0, w, h);
+    // pixels[0] to pixels[3] presents red, green, blue, alpha of one pixel
+    var pixels = imgdata.data;
+
+    // initialise the rendering shape
+    scene.initialise();
+    // initialise the camera
+    camera.initialise();
+
+    var i = 0;
+    for(var y = 0; y < h; y++) {
+        // y starts from left top
+        // sy starts from left bottom
+        var sy = 1 - y / h;
+        for(var x = 0; x < w; x++) {
+            var sx = x / w;
+            var ray = camera.generateRay(sx, sy);
+
+            var colour = rayTraceRecursive(scene, ray, maxReflect);
+
+            pixels[i++] = colour.r * 255;
+            pixels[i++] = colour.g * 255;
+            pixels[i++] = colour.b * 255;
+            pixels[i++] = 255;
+        }
+    }
+
+    // render
+    ctx.putImageData(imgdata, 0, 0);
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //*********************************
@@ -311,14 +354,23 @@ renderNormal(normalCanvas, sphere,
 var plane = new Plane(new Vector3(0, 1, 0), 0);
 var sphereRed = new Sphere(new Vector3(-10, 10, -10), 10);
 var sphereBlue = new Sphere(new Vector3(10, 10, -10), 10);
-plane.material = new CheckerMaterial(0.1);
-sphereRed.material = new PhongMaterial(Colour.red, Colour.white, 32);
-sphereBlue.material = new PhongMaterial(Colour.blue, Colour.white, 16);
+plane.material = new CheckerMaterial(0.1, 0.3);
+sphereRed.material = new PhongMaterial(Colour.red, Colour.white, 32, 0.3);
+sphereBlue.material = new PhongMaterial(Colour.blue, Colour.white, 16, 0.3);
 materialRender(
     document.getElementById('materialCanvas'),
     new Union([plane, sphereRed, sphereBlue]),
-//    new Union([sphereRed, sphereBlue]),
     new PerspectiveCamera( new Vector3(0, 5, 15),
                            new Vector3(0, 0, -1), new Vector3(0, 1, 0),
                            90, 1 )
+);
+
+// material and reflection render
+reflectRender(
+    document.getElementById('reflectCanvas'),
+    new Union([plane, sphereRed, sphereBlue]),
+    new PerspectiveCamera( new Vector3(0, 5, 15),
+                           new Vector3(0, 0, -1), new Vector3(0, 1, 0),
+                           90, 1 ),
+    3
 );
